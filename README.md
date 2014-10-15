@@ -9,6 +9,15 @@ This is an implementation of rudimentary UI components for a checkerboard.  It u
 
 Board events are sent as messages over `board-events` for backend logic to process.  The backend logic can then send the board commands via `board-commands` to update its state, although it is possible for any other process to alter the board state directly using `swap!`.
 
+Quickstart Notes
+================
+
+* Install [`lein`](http://leiningen.org/)
+* Run `lein cljsbuild`
+* Open a browser on `index.html`
+
+Our strongly suggested editor is [LightTable](http://lighttable.com/).
+
 The Challenge
 =============
 
