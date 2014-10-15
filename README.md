@@ -13,7 +13,7 @@ Quickstart Notes
 ================
 
 * Install [`lein`](http://leiningen.org/)
-* Run `lein cljsbuild`
+* Run `lein cljsbuild once`
 * Open a browser on `index.html`
 
 Our strongly suggested editor is [LightTable](http://lighttable.com/).
