@@ -26,13 +26,21 @@
 
 ; ===Channels ===========================================
 ; the board generates events on this channel
+;     {:event :event-symbol
+;      :position <int>}
 (def board-events (chan))
 
 ; the board receives commands to manipulate its state
+;     {:command :command-symbol
+;      :position <integer>
+;      :piece :piece-symbol}
+
 (def board-commands (chan))
 
 ; for other processes to acquire the board state atom
+;     (atom (create-board))
 (def board-state (chan))
+
 
 ; == UI events ==========================================
 ; when we click a game square, we send an event
@@ -40,7 +48,7 @@
   (put! board-events {:event :board-clicked
                       :position board-pos}))
 
-; == Board UI Drawing ===================================
+; == Board State ==========================================
 ; initialize a board, where positions are indexed 1-32.
 ; each position is an atom containing the symbol of the
 ; piece in it.
@@ -54,6 +62,11 @@
                           (repeat 8 :empty-piece)
                           (repeat 12 :black-piece)]))))))
 
+; instantiate our game board state, initializing our
+; board with starting pieces
+(def board (create-board))
+
+; == Board UI Drawing ===================================
 ; draw pieces based on the piece-type
 (defn draw-piece [piece-type]
   (apply dom/div #js {:className piece-type} nil))
@@ -65,7 +78,6 @@
 		    piece-pos (first piece)
         white-square (dom/td #js {:className "white"})
         green-square (dom/td #js {:className "green"
-                                  :id piece-pos
                                   :onClick
                                     (fn [e] (board-click
                                              piece-pos))}
@@ -91,16 +103,10 @@
       (map draw-row
            (partition 4 board)))))
 
-; == Board State ==========================================
-; instantiate our game board state, initializing our
-; board with starting pieces
-(def board
-  (create-board))
-
 ; == Bootstrap ============================================
 (om/root
-  checkerboard
-  board
+  checkerboard ; our UI
+  board        ; our game state
   {:target (. js/document (getElementById "checkers"))})
 
 ; == Concurrent Processes =================================
