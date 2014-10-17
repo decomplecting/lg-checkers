@@ -24,6 +24,10 @@
 ; user interaction events, as well as changing the board
 ; state.
 
+; positional constants
+(def top-row 1)
+(def bottom-row 8)
+
 ; ===Channels ===========================================
 ; the board generates events on this channel
 ;     {:event :event-symbol
@@ -41,6 +45,43 @@
 ;     (atom (create-board))
 (def board-state (chan))
 
+; === Utility Functions =================================
+(defn compute-pos-neighbors [pos]
+  (let [curr-row (Math/ceil (/ pos 4))
+        row-odd? (odd? curr-row)
+        row-even? (not row-odd?)
+        top-row? (= curr-row top-row)
+        bottom-row? (= curr-row bottom-row)
+        right-edge? (= (mod pos 4) 0)
+        left-edge? (= (mod pos 4) 1)
+        up-left (if row-odd? (- pos 4)
+                             (- pos 5))
+        up-right (if row-odd? (- pos 3)
+                              (- pos 4))
+        down-left (if row-odd? (+ pos 4)
+                               (+ pos 5))
+        down-right (if row-odd? (+ pos 3)
+                                (+ pos 4))]
+    (remove nil?
+            (flatten
+             [(if (not top-row?)
+                (if row-even?
+                  [up-left up-right]
+                  [(if (not left-edge?)
+                     up-left)
+                   (if (not right-edge?)
+                     up-right)]))
+              (if (not bottom-row?)
+                (if row-odd?
+                  [down-left down-right]
+                  [(if (not left-edge?)
+                     down-left)
+                   (if (not right-edge?)
+                     down-right)]))]))))
+
+(defn compute-neighbor-positions []
+  (map (fn [pos] {pos (compute-pos-neighbors pos)})
+       (range 1 33))
 
 ; == UI events ==========================================
 ; when we click a game square, we send an event
@@ -90,7 +131,8 @@
 ; and iterates over the board positions, drawing each
 ; tuple of checkerboard squares
 (defn draw-row [row]
-  (let [row-odd? (odd? (/ (first (last row)) 4))]
+  (let [curr-row (/ (first (last row)) 4)
+        row-odd? (odd? curr-row)]
     (apply dom/tr nil
       (mapcat #(draw-tuple % row-odd?)
            row))))
