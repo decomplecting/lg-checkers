@@ -1,7 +1,6 @@
 (ns lg-checkers.core
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [put! chan <!]]
-            [lg-checkers.ui :refer [bootstrap-ui]]))
+  (:require [cljs.core.async :refer [put! chan <!]]))
 
 (enable-console-print!)
 
