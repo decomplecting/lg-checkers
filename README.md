@@ -34,6 +34,7 @@ Good luck!  We have tried to come up with an interesting challenge that will hel
 Quickstart Notes
 ================
 
+* You will need Java 7 or Java 8 JRE or JDK installed on your machine.
 * Install [`lein`](http://leiningen.org/)
 * Run `lein cljsbuild once`
 * Open a browser on `index.html`
