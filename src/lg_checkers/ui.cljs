@@ -3,7 +3,7 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [put! chan <!]]
-            [lg-checkers.core :refer [board board-events]]))
+            [lg-checkers.board :refer [board board-events]]))
 
 (enable-console-print!)
 
