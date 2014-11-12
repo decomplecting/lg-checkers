@@ -8,9 +8,8 @@ The challenge is to implement the game logic for a provided checkerboard board s
 
 Some notes:
 
-* There is no 'right' answer; it is a design challenge in part, to see how the challengee think and approaches the problem.
+* There is no 'right' answer
 * This is intended to take no more than a few chronological days of effort.
-* The depth and scope of the attempt is up to the challenge.
 
 Some possible functionality areas to design and implement:
 
@@ -29,7 +28,7 @@ The provided code is an implementation of a rudimentary UI and board state for a
 
 Board events are sent as messages over `board-events` for backend logic to process.  The backend logic can then send the board commands via `board-commands` to update its state, although it is possible for any other process to alter the board state directly using `swap!`.
 
-Good luck!  We have tried to come up with an interesting challenge that will help demonstrate the principles that we are trying to architect our system to.
+Good luck!  We have tried to come up with an interesting challenge!
 
 Quickstart Notes
 ================
@@ -44,4 +43,8 @@ Our strongly suggested editor is [LightTable](http://lighttable.com/) due to the
 Submission Guidelines
 =====================
 
-We are providing this challenge in the form of a tarball.  We expect updated code to be returned in a tarball, compiles cleanly using `lein clean; lein cljsbuild`, and executes in a browser.
+Please provide a link to your code in your presentation.  Also to allow more time for review, upon completion, send in a tarball to `wbrown@lgscout.com`. It should compile cleanly using lein clean; lein cljsbuild, and execute in a browser.
+
+Author
+=====================
+Wes Brown (wbrown@lgscout.com)
