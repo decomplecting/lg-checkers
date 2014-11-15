@@ -36,28 +36,14 @@
         ]
       (d/transact! conn (vec (concat positions red-pieces black-pieces)))))
 
-(print (sort-by first (d/q '[:find ?e ?idx ?x ?y
-                             :where
-                             [?e :piece/position ?pos]
-                             [?pos :position/idx ?idx]
-                             [?pos :position/x ?x]
-                             [?pos :position/y ?y]] @conn)))
 
+(defn board-contents-q [db]
+  (d/q '[:find ?idx ?color
+         :where
+         [?piece :piece/color ?color]
+         [?piece :piece/position ?pos]
+         [?pos :position/idx ?idx]] db))
 
-#_(print (sort-by first (d/q '[:find ?e ?idx ?x ?y
-              :where
-              [?e :position/idx ?idx]
-              [?e :position/x ?x]
-              [?e :position/y ?y]] @conn)))
-
-
-#_(print (vec (apply concat (map-indexed (fn [i row]
-                                         (if (even? i)
-                                           (take-nth 2 (drop 1 row))
-                                           (take-nth 2 row))) (partition 8
-                                                                         (for [y (range 8)
-                                                                               x (range 8)]
-                                                                           [x y]))))))
 
 ; == Notes ==============================================
 ; Board pieces are defined in the checkers.css file.  The
