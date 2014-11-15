@@ -59,6 +59,11 @@
                                                                                x (range 8)]
                                                                            [x y]))))))
 
+(defn board-munge [tuples]
+  (merge
+   (zipmap (range 1 35) (repeat :empty-piece))
+   (apply hash-map (flatten tuples))) )
+
 ; == Notes ==============================================
 ; Board pieces are defined in the checkers.css file.  The
 ; currently defined pieces are:
@@ -180,3 +185,4 @@
       (let [command (<! board-commands)]
         (swap! board assoc (:position command)
                            (:piece command)))))
+(print board)
