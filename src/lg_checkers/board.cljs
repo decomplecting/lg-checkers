@@ -3,6 +3,23 @@
   (:require [cljs.core.async :refer [put! chan <!]]
             [datascript :as d]))
 
+(enable-console-print!)
+
+(defonce schema {:piece/position {:db/valueType :db.type/ref}})
+
+(defonce conn (d/create-conn schema))
+
+
+(defonce initial-tx
+  (let [pos-matrix (for [y (range 8)
+                         x (range 8)]
+                     [x y])
+        positions (vec (map-indexed (fn [i [x y]]
+                                      {:db/id (- i)
+                                       :position/idx (inc i)
+                                       :position/x x
+                                       :position/y y}) pos-matrix))]
+    (d/transact! conn positions)))
 
 
 ; == Notes ==============================================
@@ -55,12 +72,11 @@
                           (repeat 8 :empty-piece)
                           (repeat 12 :black-piece)]))))))
 
-(defn ^:export foo []
-  )
 
 ; instantiate our game board state, initializing our
 ; board with starting pieces
 (defonce board (create-board))
+
 
 ; === Utility Functions =================================
 ; positional constants
