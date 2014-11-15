@@ -3,7 +3,7 @@
   (:require [cljs.core.async :refer [put! chan <!]]
             [datascript :as d]))
 
-(enable-console-print!)
+
 
 ; == Notes ==============================================
 ; Board pieces are defined in the checkers.css file.  The
@@ -28,18 +28,18 @@
 ; the board generates events on this channel
 ;     {:event :event-symbol
 ;      :position <int>}
-(def board-events (chan))
+(defonce board-events (chan))
 
 ; the board receives commands to manipulate its state
 ;     {:command :command-symbol
 ;      :position <integer>
 ;      :piece :piece-symbol}
 
-(def board-commands (chan))
+(defonce board-commands (chan))
 
 ; for other processes to acquire the board state atom
 ;     (atom (create-board))
-(def board-state (chan))
+(defonce board-state (chan))
 
 ; == Board State ==========================================
 ; initialize a board, where positions are indexed 1-32.
@@ -55,14 +55,17 @@
                           (repeat 8 :empty-piece)
                           (repeat 12 :black-piece)]))))))
 
+(defn ^:export foo []
+  )
+
 ; instantiate our game board state, initializing our
 ; board with starting pieces
-(def board (create-board))
+(defonce board (create-board))
 
 ; === Utility Functions =================================
 ; positional constants
-(def top-row 1)
-(def bottom-row 8)
+(defonce top-row 1)
+(defonce bottom-row 8)
 
 ; given a board position, return the position of neighbors
 ; [NOTE:] Challengee should investigate memoization of

@@ -6,9 +6,11 @@
                  [org.clojure/clojurescript "0.0-2371"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [om "0.7.1"]
-                 [datascript "0.5.1"]]
+                 [datascript "0.5.1"]
+                 [figwheel "0.1.5-SNAPSHOT"]]
 
-  :plugins [[lein-cljsbuild "1.0.4-SNAPSHOT"]]
+  :plugins [[lein-cljsbuild "1.0.4-SNAPSHOT"]
+            [lein-figwheel "0.1.5-SNAPSHOT"]]
 
   :source-paths ["src"]
 
@@ -16,8 +18,8 @@
     :builds [{:id "lg-checkers"
               :source-paths ["src"]
               :compiler {
-                :output-to "lg_checkers.js"
-                :output-dir "out"
+                :output-to "resources/public/js/lg_checkers.js"
+                :output-dir "resources/public/js/out"
                 :externs ["datascript/externs.js"]
                 :optimizations :none
                 :source-map true}}]})
