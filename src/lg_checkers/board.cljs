@@ -168,7 +168,7 @@
 ; at present, it sets the board position clicked to contain
 ; a black piece by sending a command to the board-commands
 ; channel
-#_(go (while true
+(go (while true
       (let [event (<! board-events)]
         (put! board-commands
               {:command :update-board-position
@@ -181,4 +181,11 @@
 #_(go (while true
       (let [command (<! board-commands)]
         (swap! board assoc (:position command)
-                           (:piece command)))))
+               (:piece command)))))
+
+(go (while true
+      (let [command (<! board-commands)]
+        ;; Let's try a transaction
+        (d/transact! conn [{:db/id -1
+                            :piece/position (:position command)
+                            :piece/color (:piece command)}]))))
