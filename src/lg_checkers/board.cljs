@@ -1,5 +1,5 @@
 (ns lg-checkers.board
-  (:require-macros [cljs.core.async.macros :refer [go]])
+  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [put! chan <!]]
             [datascript :as d]))
 
@@ -168,12 +168,14 @@
 ; at present, it sets the board position clicked to contain
 ; a black piece by sending a command to the board-commands
 ; channel
-(go (while true
-      (let [event (<! board-events)]
-        (put! board-commands
-              {:command :update-board-position
-               :position (:position event)
-               :piece :black-piece}))))
+(go-loop [last-pos nil]
+  (let [event (<! board-events)]
+    (print last-pos)
+    (put! board-commands
+          {:command :update-board-position
+           :position (:position event)
+           :piece :black-piece})
+    (recur (:position event))))
 
 ; this concurrent process receives board command messages
 ; and executes on them.  at present, the only thing it does
@@ -183,9 +185,13 @@
         (swap! board assoc (:position command)
                (:piece command)))))
 
-(go (while true
-      (let [command (<! board-commands)]
-        ;; Let's try a transaction
-        (d/transact! conn [{:db/id -1
-                            :piece/position (:position command)
-                            :piece/color (:piece command)}]))))
+(go-loop []
+     (let [command (<! board-commands)]
+       ;; Let's try a transaction
+                                        ;(print @conn)
+       (d/transact! conn [{:db/id -1
+                           ;; note that the position eids happen to be
+                           ;; the same as board index, so we cut a corner:
+                           :piece/position (:position command)
+                           :piece/color (:piece command)}])
+       (recur)))
