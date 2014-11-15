@@ -1,6 +1,7 @@
 (ns lg-checkers.board
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [put! chan <!]]))
+  (:require [cljs.core.async :refer [put! chan <!]]
+            [datascript :as d]))
 
 (enable-console-print!)
 

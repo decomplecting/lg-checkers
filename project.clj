@@ -3,9 +3,10 @@
   :url "http://example.com/FIXME"
 
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-2311"]
+                 [org.clojure/clojurescript "0.0-2371"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
-                 [om "0.7.1"]]
+                 [om "0.7.1"]
+                 [datascript "0.5.1"]]
 
   :plugins [[lein-cljsbuild "1.0.4-SNAPSHOT"]]
 
@@ -17,5 +18,6 @@
               :compiler {
                 :output-to "lg_checkers.js"
                 :output-dir "out"
+                :externs ["datascript/externs.js"]
                 :optimizations :none
                 :source-map true}}]})
