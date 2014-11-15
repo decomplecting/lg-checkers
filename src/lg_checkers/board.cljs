@@ -9,7 +9,6 @@
 
 (defonce conn (d/create-conn schema))
 
-
 (defonce initial-tx
     (let [pos-matrix (vec (apply concat (map-indexed (fn [i row]
                                     (if (even? i)
@@ -36,7 +35,6 @@
         ]
       (d/transact! conn (vec (concat positions red-pieces black-pieces)))))
 
-
 (defn board-contents-q [db]
   (d/q '[:find ?idx ?color
          :where
@@ -53,6 +51,9 @@
 (defn get-board [db]
   (board-munge (board-contents-q db)))
 
+
+
+;(print (get-board @conn))
 
 ; == Notes ==============================================
 ; Board pieces are defined in the checkers.css file.  The
@@ -108,8 +109,14 @@
 ; instantiate our game board state, initializing our
 ; board with starting pieces
 (defonce board (create-board))
-;(print board)
 
+
+(d/listen! conn (fn [tx-data]
+                  (let [db (:db-after tx-data)]
+                    (swap! board merge (get-board db)))))
+
+
+;(defonce board conn)
 ; === Utility Functions =================================
 ; positional constants
 (defonce top-row 1)
@@ -161,7 +168,7 @@
 ; at present, it sets the board position clicked to contain
 ; a black piece by sending a command to the board-commands
 ; channel
-(go (while true
+#_(go (while true
       (let [event (<! board-events)]
         (put! board-commands
               {:command :update-board-position
@@ -171,7 +178,7 @@
 ; this concurrent process receives board command messages
 ; and executes on them.  at present, the only thing it does
 ; is sets the desired game position to the desired piece
-(go (while true
+#_(go (while true
       (let [command (<! board-commands)]
         (swap! board assoc (:position command)
                            (:piece command)))))

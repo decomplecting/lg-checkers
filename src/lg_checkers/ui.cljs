@@ -58,4 +58,4 @@
     board        ; our game state
     {:target (. js/document (getElementById "checkers"))}))
 
-(bootstrap-ui)
+;(bootstrap-ui)

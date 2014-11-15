@@ -1,8 +1,10 @@
 (ns lg-checkers.core
-  (:require [lg-checkers.ui :refer [bootstrap-ui]]
+  (:require [lg-checkers.board :refer []]
+            [lg-checkers.ui :refer [bootstrap-ui]]
             [figwheel.client :as fw :include-macros true]))
 
 (enable-console-print!)
+
 
 (bootstrap-ui)
 
