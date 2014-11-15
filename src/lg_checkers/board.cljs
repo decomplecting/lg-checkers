@@ -26,12 +26,12 @@
 
           red-pieces (vec (map-indexed (fn [i [x y]]
                                          {:db/id (- (+ 100 (inc i)))
-                                          :piece/color :red
+                                          :piece/color :red-piece
                                           :piece/position (- (inc i))}) (take 12 pos-matrix)))
 
           black-pieces (vec (map-indexed (fn [i [x y]]
                                          {:db/id (- (+ 200 (inc i)))
-                                          :piece/color :black
+                                          :piece/color :black-piece
                                           :piece/position (- (+ 20 (inc i)))}) (drop 20 pos-matrix)))
         ]
       (d/transact! conn (vec (concat positions red-pieces black-pieces)))))
@@ -44,11 +44,15 @@
          [?piece :piece/position ?pos]
          [?pos :position/idx ?idx]] db))
 
-
 (defn board-munge [tuples]
   (merge
-   (zipmap (range 1 35) (repeat :empty-piece))
-   (apply hash-map (flatten tuples))) )
+   (zipmap (range 1 33) (repeat :empty-piece))
+   (apply hash-map (flatten (vec tuples)))))
+
+
+(defn get-board [db]
+  (board-munge (board-contents-q db)))
+
 
 ; == Notes ==============================================
 ; Board pieces are defined in the checkers.css file.  The
@@ -171,4 +175,3 @@
       (let [command (<! board-commands)]
         (swap! board assoc (:position command)
                            (:piece command)))))
-(print board)
