@@ -57,6 +57,41 @@
       (d/transact! conn (vec (concat positions red-pieces black-pieces)))))
 
 
+;; checkers has rules... so does datalog!
+
+(defonce checkers-rules
+  '[
+    ;; just a helper
+    [(coords ?pos ?x ?y)
+     [?pos :position/x ?x]
+     [?pos :position/y ?y]]
+
+    ;; inc OR dec
+    [(inc-dec ?i ?ii)
+     [(inc ?i) ?ii]]
+    [(inc-dec ?i ?ii)
+     [(dec ?i) ?ii]]
+
+    ;; get neighbors
+    [(neighbors ?pos ?neighbor)
+     (coords ?pos ?x ?y)
+     (inc-dec ?x ?xx)
+     (inc-dec ?y ?yy)
+     [?neighbor :position/x ?xx]
+     [?neighbor :position/y ?yy]
+     ]
+
+    ])
+
+#_(print (d/q '[:find ?neighbor
+              :in $ % ?idx
+              :where
+              (neighbors ?pos ?neighbor)
+              [?pos :position/idx ?idx]] @conn checkers-rules 17
+              ))
+
+
+
 
 (defn board-contents-q [db & [tx-id]]
   (if tx-id
