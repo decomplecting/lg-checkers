@@ -68,8 +68,7 @@
              (do
                (swap! txq merge (get-in tx-report [:tempids :db/current-tx]))
                (reset! tx-cursor (last @txq)))))
-(print txq)
-(print tx-cursor)
+
 
 ;; checkers has rules... so does datalog!
 
