@@ -11,6 +11,10 @@
 
 (defonce conn (d/create-conn schema))
 
+(defonce txq (atom (sorted-set (+ d/tx0 1))))
+
+(defonce tx-cursor (atom (last @txq)))
+
 
 ;; prevent cursor-ification https://gist.github.com/swannodette/11308901
 (extend-type dc/DB
@@ -57,7 +61,21 @@
       (d/transact! conn (vec (concat positions red-pieces black-pieces)))))
 
 
+;; let's keep a tx queue
+
+(d/listen! conn
+           (fn [tx-report]
+             (do
+               (swap! txq merge (get-in tx-report [:tempids :db/current-tx]))
+               (reset! tx-cursor (last @txq)))))
+(print txq)
+(print tx-cursor)
+
 ;; checkers has rules... so does datalog!
+
+
+
+
 
 (defonce checkers-rules
   '[
@@ -246,12 +264,13 @@
 ; and then wiring them up to the btns should be easy.
 
 (defn rewind []
-  (print "REWIND!")
-  )
+  (let [tx-id (dec @tx-cursor)]
+    ))
 
 (defn forward []
-  (print "FORWARD!")
-  )
+  (let [tx-id (inc @tx-cursor)]
+    ()
+    ))
 
 
 (defonce mah-loops
