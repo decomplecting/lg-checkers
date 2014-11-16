@@ -64,6 +64,14 @@
 
 ; == Data Magic ===
 
+(defn get-tx-ids []
+ (get-board ) )
+
+(defn slider
+  "A slider for swapping the database state."
+  []
+  )
+
 (defn temporality []
   (om/component
    (dom/div nil
@@ -75,3 +83,5 @@
    temporality
    board
    {:target (. js/document (getElementById "data"))}))
+
+(def foo 1)

@@ -240,6 +240,20 @@
        :position pos-b
        :piece blk-piece-to-move})))
 
+; == Time travel =====================
+; @milt I need to pair with you on these fns
+; to get the fn queries applied to the txs properly
+; and then wiring them up to the btns should be easy.
+
+(defn rewind []
+  (print "REWIND!")
+  )
+
+(defn forward []
+  (print "FORWARD!")
+  )
+
+
 (defonce mah-loops
   (do
 ; == Concurrent Processes =================================
@@ -279,8 +293,8 @@
   (let [time-travel (<! time-lord)]
     ;;catch thjose clicks
     (cond (= time-travel :rewind)
-          (print "REWIND!")
+          (rewind)
           (= time-travel :forward)
-          (print "FORWARD!")
+          (forward)
           :else (print "The Doctor is in."))
     (recur)))))
