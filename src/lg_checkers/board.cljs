@@ -289,13 +289,13 @@
 ; channel
 (go-loop [last-pos nil]
   (let [{:keys [position]} (<! board-events)
-        db @conn]
-    (print position)
-    (if last-pos ;; was there a previous click?
+        db @conn
+        last-click-piece (get-piece-at-pos db last-pos)]
+    (if (and last-pos last-click-piece) ;; was there a previous click? was it a piece?
       (if (legal-move? db last-pos position)
         (do (put! board-commands {:command :update-board-position
                                   :position position
-                                  :piece (get-piece-at-pos db last-pos)})
+                                  :piece last-click-piece})
             (recur nil))
         (recur nil)) ;;if not, clear and loop
       (recur position)) ;; if not, store the position
