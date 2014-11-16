@@ -3,7 +3,7 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [put! chan <!]]
-            [lg-checkers.board :refer [board board-events rewind-click]]))
+            [lg-checkers.board :refer [board board-events time-lord]]))
 
 (enable-console-print!)
 
@@ -66,7 +66,9 @@
 
 (defn rewind []
   (om/component
-   (dom/button #js {:onClick (fn [e] (put! rewind-click :rewind))} "Rewind")))
+   (dom/div nil
+            (dom/button #js {:onClick (fn [e] (put! time-lord :rewind))} "Rewind")
+            (dom/button #js {:onClick (fn [e] (put! time-lord :forward))} "Forward"))))
 
 (defn data-ui []
   (om/root

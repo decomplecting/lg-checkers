@@ -92,7 +92,7 @@
 (defonce board-state (chan))
 
 ; For our rewind button
-(defonce rewind-click (chan))
+(defonce time-lord (chan))
 
 ; == Board State ==========================================
 ; initialize a board, where positions are indexed 1-32.
@@ -202,3 +202,13 @@
                            :piece/position (:position command)
                            :piece/color (:piece command)}])
        (recur)))
+
+(go-loop []
+  (let [time-travel (<! time-lord)]
+    ;;catch thjose clicks
+    (cond (= time-travel :rewind)
+          (print "REWIND!")
+          (= time-travel :forward)
+          (print "FORWARD!")
+          :else (print "The Doctor is in."))
+    (recur)))
