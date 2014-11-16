@@ -2,6 +2,12 @@
 
 [Hackathon Presentation](http://goo.gl/5BIFM2)
 
+So for now I'll leave the original challenge info below.
+
+We're Datalog-loving madmen, so we've changed the state managment to a DataScript database, munged some other things, added Figwheel for instant updates, and written a deploy script so if you fork this repo, you should theoretically be able to just run `./deploy.sh` and have the app show up on Github Pages.
+
+Your mileage, of course, may vary.
+
 The Challenge: Lookingglass Checkers
 ====================================
 
