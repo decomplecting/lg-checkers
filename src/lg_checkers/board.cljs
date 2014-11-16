@@ -115,12 +115,12 @@
 (defn board-contents-q [db & [tx-id]]
   (if tx-id
     (d/q '[:find ?idx ?color
-           :in $ ?tx-id
+           :in $
            :where
-           [(<= ?t ?tx-id)]
-           [?piece :piece/color ?color ?t]
+           [?piece :piece/color ?color]
            [?piece :piece/position ?pos]
-           [?pos :position/idx ?idx]] db)
+           [?pos :position/idx ?idx]] (vec (filter (fn [[_ _ _ t _]]
+                                                     (<= t tx-id)) (map vec (:eavt db)))))
     (d/q '[:find ?idx ?color
            :where
            [?piece :piece/color ?color]
