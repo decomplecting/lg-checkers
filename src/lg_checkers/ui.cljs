@@ -64,7 +64,7 @@
 
 ; == Data Magic ===
 
-(defn rewind []
+(defn temporality []
   (om/component
    (dom/div nil
             (dom/button #js {:onClick (fn [e] (put! time-lord :rewind))} "Rewind")
@@ -72,6 +72,6 @@
 
 (defn data-ui []
   (om/root
-   rewind
+   temporality
    board
    {:target (. js/document (getElementById "data"))}))
