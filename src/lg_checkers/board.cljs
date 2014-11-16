@@ -163,19 +163,46 @@
   (map (fn [pos] {pos (compute-pos-neighbors pos)})
        (range 1 33)))
 
+
+(defn empty-pos? [db pos]
+  (nil? (ffirst (d/q '[:find ?piece
+                       :in $ ?pos
+                       :where
+                       [?piece :piece/position ?p]
+                       [?p :position/idx ?pos]] db pos))))
+
+
+(defn get-move [pos-a pos-b]
+  (let [db @conn
+        blk-piece-to-move (ffirst
+                           (d/q '[:find ?piece
+                                  :in $ ?pos
+                                  :where
+                                  [?piece :piece/position ?p]
+                                  [?piece :piece/color :black-piece]
+                                  [?p :position/idx ?pos]] db pos-a))]
+    (when (and blk-piece-to-move
+             (empty-pos? db pos-b))
+      {:command :update-board-position
+       :position pos-b
+       :piece blk-piece-to-move})))
+
+
 ; == Concurrent Processes =================================
 ; this concurrent process reacts to board click events --
 ; at present, it sets the board position clicked to contain
 ; a black piece by sending a command to the board-commands
 ; channel
 (go-loop [last-pos nil]
-  (let [event (<! board-events)]
-    (print last-pos)
-    (put! board-commands
-          {:command :update-board-position
-           :position (:position event)
-           :piece :black-piece})
-    (recur (:position event))))
+  (let [{:keys [position]} (<! board-events)]
+
+    (if last-pos ;; was there a previous click?
+      (if-let [move (get-move last-pos position)] ;; was it a move?
+        (do (put! board-commands move)
+            (recur nil))
+        (recur nil)) ;;if not, clear and loop
+      (recur position)) ;; if not, store the position
+    ))
 
 ; this concurrent process receives board command messages
 ; and executes on them.  at present, the only thing it does
@@ -186,12 +213,11 @@
                (:piece command)))))
 
 (go-loop []
-     (let [command (<! board-commands)]
+     (let [{:keys [piece position]} (<! board-commands)]
        ;; Let's try a transaction
                                         ;(print @conn)
-       (d/transact! conn [{:db/id -1
+       (d/transact! conn [{:db/id piece
                            ;; note that the position eids happen to be
                            ;; the same as board index, so we cut a corner:
-                           :piece/position (:position command)
-                           :piece/color (:piece command)}])
+                           :piece/position position}])
        (recur)))
