@@ -78,17 +78,7 @@
      (inc-dec ?x ?xx)
      (inc-dec ?y ?yy)
      [?neighbor :position/x ?xx]
-     [?neighbor :position/y ?yy]
-     ]
-
-    ])
-
-#_(print (d/q '[:find ?neighbor
-              :in $ % ?idx
-              :where
-              (neighbors ?pos ?neighbor)
-              [?pos :position/idx ?idx]] @conn checkers-rules 17
-              ))
+     [?neighbor :position/y ?yy]]])
 
 
 
