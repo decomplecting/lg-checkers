@@ -21,30 +21,77 @@
 
 
 (defn init-board []
-    (let [pos-matrix (vec (apply concat (map-indexed (fn [i row]
-                                    (if (even? i)
-                                      (take-nth 2 (drop 1 row))
-                                      (take-nth 2 row))) (partition 8
-                                                                    (for [y (range 8)
-                                                                          x (range 8)]
-                                                                      [x y])))))
-          positions (vec (map-indexed (fn [i [x y]]
-                                        {:db/id (- (inc i))
-                                         :position/idx (inc i)
-                                         :position/x x
-                                         :position/y y}) pos-matrix))
+  (let [pos-matrix (vec
+                    (apply
+                     concat
+                     (map-indexed
+                      (fn [i row]
+                        (if (even? i)
+                          (take-nth 2 (drop 1 row))
+                          (take-nth 2 row)))
+                      (partition 8 (for [y (range 8)
+                                         x (range 8)]
+                                     [x y])))))
+          ;; positions are db entities.
+          positions (vec
+                     (map-indexed
+                      (fn [i [x y]]
+                        {:db/id (- (inc i))
+                         :position/idx (inc i)
+                         :position/x x
+                         :position/y y}) pos-matrix))
 
-          red-pieces (vec (map-indexed (fn [i [x y]]
-                                         {:db/id (- (+ 100 (inc i)))
-                                          :piece/color :red-piece
-                                          :piece/position (- (inc i))}) (take 12 pos-matrix)))
+          ;; pieces ref positions
+          red-pieces (vec
+                      (map-indexed
+                       (fn [i [x y]]
+                         {:db/id (- (+ 100 (inc i)))
+                          :piece/color :red-piece
+                          :piece/position (- (inc i))}) (take 12 pos-matrix)))
 
           black-pieces (vec (map-indexed (fn [i [x y]]
                                          {:db/id (- (+ 200 (inc i)))
                                           :piece/color :black-piece
-                                          :piece/position (- (+ 20 (inc i)))}) (drop 20 pos-matrix)))
-        ]
+                                          :piece/position (- (+ 20 (inc i)))})
+                                         (drop 20 pos-matrix)))]
       (d/transact! conn (vec (concat positions red-pieces black-pieces)))))
+
+
+;; checkers has rules... so does datalog!
+
+(defonce checkers-rules
+  '[
+    ;; just a helper
+    [(coords ?pos ?x ?y)
+     [?pos :position/x ?x]
+     [?pos :position/y ?y]]
+
+    ;; inc OR dec
+    [(inc-dec ?i ?ii)
+     [(inc ?i) ?ii]]
+    [(inc-dec ?i ?ii)
+     [(dec ?i) ?ii]]
+
+    ;; get neighbors
+    [(neighbors ?pos ?neighbor)
+     (coords ?pos ?x ?y)
+     (inc-dec ?x ?xx)
+     (inc-dec ?y ?yy)
+     [?neighbor :position/x ?xx]
+     [?neighbor :position/y ?yy]
+     ]
+
+    ])
+
+#_(print (d/q '[:find ?neighbor
+              :in $ % ?idx
+              :where
+              (neighbors ?pos ?neighbor)
+              [?pos :position/idx ?idx]] @conn checkers-rules 17
+              ))
+
+
+
 
 (defn board-contents-q [db & [tx-id]]
   (if tx-id
@@ -232,7 +279,6 @@
 (go-loop []
      (let [{:keys [piece position]} (<! board-commands)]
        ;; Let's try a transaction
-                                        ;(print @conn)
        (d/transact! conn [{:db/id piece
                            ;; note that the position eids happen to be
                            ;; the same as board index, so we cut a corner:
