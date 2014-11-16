@@ -46,12 +46,20 @@
         ]
       (d/transact! conn (vec (concat positions red-pieces black-pieces)))))
 
-(defn board-contents-q [db]
-  (d/q '[:find ?idx ?color
+(defn board-contents-q [db & [tx-id]]
+  (if tx-id
+    (d/q '[:find ?idx ?color
+           :in $ ?tx-id
+           :where
+           [(<= ?t ?tx-id)]
+           [?piece :piece/color ?color ?t]
+           [?piece :piece/position ?pos]
+           [?pos :position/idx ?idx]] db)
+    (d/q '[:find ?idx ?color
          :where
          [?piece :piece/color ?color]
          [?piece :piece/position ?pos]
-         [?pos :position/idx ?idx]] db))
+         [?pos :position/idx ?idx]] db)))
 
 (defn board-munge [tuples]
   (merge
@@ -59,8 +67,8 @@
    (apply hash-map (flatten (vec tuples)))))
 
 
-(defn get-board [db]
-  (board-munge (board-contents-q db)))
+(defn get-board [db & [tx-id]]
+  (board-munge (board-contents-q db tx-id)))
 
 
 
