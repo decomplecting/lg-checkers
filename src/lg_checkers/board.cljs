@@ -250,7 +250,11 @@
 
 
 
-(defn legal-move? [db pos1 pos2]
+(defn legal-move?
+  "Given a db and two positions, checks the legality of move. At present, the
+  game is pretty boring as the only legal move is to an adjacent empty space.
+  Passive agressive checkers"
+  [db pos1 pos2]
   (let [possible-moves (d/q '[:find ?moves
                               :in $ % ?pos1
                               :where
@@ -260,7 +264,9 @@
                               ] db checkers-rules pos1)]
     (possible-moves [pos2])))
 
-(defn get-piece-at-pos [db pos]
+(defn get-piece-at-pos
+  "Given a db and a position, find a piece or return nil"
+  [db pos]
   (ffirst (d/q '[:find ?piece
                  :in $ ?pos
                  :where
@@ -313,8 +319,6 @@
      (let [{:keys [piece position]} (<! board-commands)]
        ;; Let's try a transaction
        (d/transact! conn [{:db/id piece
-                           ;; note that the position eids happen to be
-                           ;; the same as board index, so we cut a corner:
                            :piece/position position}])
        (recur)))
 
