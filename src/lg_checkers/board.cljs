@@ -72,16 +72,18 @@
 
 ;; checkers has rules... so does datalog!
 
-
-
-
-
 (defonce checkers-rules
   '[
+
     ;; just a helper
     [(coords ?pos ?x ?y)
      [?pos :position/x ?x]
      [?pos :position/y ?y]]
+
+
+    ;; get piece position
+    [(piece-position ?piece ?pos)
+     [?piece :piece/position ?pos]]
 
     ;; inc OR dec
     [(inc-dec ?i ?ii)
@@ -95,9 +97,19 @@
      (inc-dec ?x ?xx)
      (inc-dec ?y ?yy)
      [?neighbor :position/x ?xx]
-     [?neighbor :position/y ?yy]]])
+     [?neighbor :position/y ?yy]]
 
+    ;; get empty
+    [(empty-pos ?pos)
+     [?pos :position/idx]
+     [(missing? $ ?pos :piece/_position)]]
 
+    [(empty-neighbors ?pos ?neighbor)
+     (empty-pos ?pos)
+     (neighbors ?pos ?neighbor)
+     ]
+
+    ])
 
 
 (defn board-contents-q [db & [tx-id]]
@@ -110,10 +122,10 @@
            [?piece :piece/position ?pos]
            [?pos :position/idx ?idx]] db)
     (d/q '[:find ?idx ?color
-         :where
-         [?piece :piece/color ?color]
-         [?piece :piece/position ?pos]
-         [?pos :position/idx ?idx]] db)))
+           :where
+           [?piece :piece/color ?color]
+           [?piece :piece/position ?pos]
+           [?pos :position/idx ?idx]] db)))
 
 (defn board-munge [tuples]
   (merge
@@ -234,28 +246,25 @@
   (map (fn [pos] {pos (compute-pos-neighbors pos)})
        (range 1 33)))
 
-(defn empty-pos? [db pos]
-  (nil? (ffirst (d/q '[:find ?piece
-                       :in $ ?pos
-                       :where
-                       [?piece :piece/position ?p]
-                       [?p :position/idx ?pos]] db pos))))
 
 
-(defn get-move [pos-a pos-b]
-  (let [db @conn
-        blk-piece-to-move (ffirst
-                           (d/q '[:find ?piece
-                                  :in $ ?pos
-                                  :where
-                                  [?piece :piece/position ?p]
-                                  [?piece :piece/color :black-piece]
-                                  [?p :position/idx ?pos]] db pos-a))]
-    (when (and blk-piece-to-move
-             (empty-pos? db pos-b))
-      {:command :update-board-position
-       :position pos-b
-       :piece blk-piece-to-move})))
+
+
+(defn legal-move? [db pos1 pos2]
+  (let [possible-moves (d/q '[:find ?moves
+                              :in $ % ?pos1
+                              :where
+                              (empty-pos ?moves)
+                              (neighbors ?pos1 ?moves)
+                              [_ :piece/position ?pos1]
+                              ] db checkers-rules pos1)]
+    (possible-moves [pos2])))
+
+(defn get-piece-at-pos [db pos]
+  (ffirst (d/q '[:find ?piece
+                 :in $ ?pos
+                 :where
+                 [?piece :piece/position ?pos]] db pos)))
 
 ; == Time travel =====================
 ; @milt I need to pair with you on these fns
@@ -277,11 +286,14 @@
 ; a black piece by sending a command to the board-commands
 ; channel
 (go-loop [last-pos nil]
-  (let [{:keys [position]} (<! board-events)]
+  (let [{:keys [position]} (<! board-events)
+        db @conn]
     (print position)
     (if last-pos ;; was there a previous click?
-      (if-let [move (get-move last-pos position)] ;; was it a move?
-        (do (put! board-commands move)
+      (if (legal-move? db last-pos position)
+        (do (put! board-commands {:command :update-board-position
+                                  :position position
+                                  :piece (get-piece-at-pos db last-pos)})
             (recur nil))
         (recur nil)) ;;if not, clear and loop
       (recur position)) ;; if not, store the position
