@@ -3,7 +3,7 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [put! chan <!]]
-            [lg-checkers.board :refer [conn get-board board board-events time-lord txq]]))
+            [lg-checkers.board :refer [conn get-board board board-events time-lord txq tx-cursor]]))
 
 (enable-console-print!)
 
@@ -49,7 +49,7 @@
   (om/component
    (apply dom/table nil
       (map draw-row
-           (partition 4 (sort-by first (get-board board)))))))
+           (partition 4 (sort-by first (get-board board @tx-cursor)))))))
 
 
 
@@ -58,7 +58,7 @@
   (om/root
     checkerboard ; our UI
     conn        ; our game state
-    {:shared {:conn conn :txq txq}
+    {:shared {:conn conn :txq txq :tx-cursor tx-cursor}
      :target (. js/document (getElementById "checkers"))}))
 
 ;(bootstrap-ui)
@@ -66,12 +66,6 @@
 ; == Data Magic ===
 
 
-(defn slider
-  "A slider for swapping the database state."
-  []
-  )
-
-(defn target-tx [])
 
 (defn temporality []
   (om/component
@@ -83,5 +77,5 @@
   (om/root
    temporality
    conn
-   {:shared {:conn conn :txq txq}
+   {:shared {:conn conn :txq txq :tx-cursor tx-cursor}
     :target (. js/document (getElementById "data"))}))

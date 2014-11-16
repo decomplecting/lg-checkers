@@ -263,13 +263,12 @@
 ; and then wiring them up to the btns should be easy.
 
 (defn rewind []
-  (let [tx-id (dec @tx-cursor)]
-    ))
+  (swap! tx-cursor dec)
+  (print (get-board @conn @tx-cursor)))
 
 (defn forward []
-  (let [tx-id (inc @tx-cursor)]
-    ()
-    ))
+  (swap! tx-cursor inc)
+  (print (get-board @conn @tx-cursor)))
 
 
 (defonce mah-loops
