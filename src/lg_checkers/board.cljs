@@ -250,6 +250,17 @@
        :position pos-b
        :piece blk-piece-to-move})))
 
+; == Time travel =====================
+
+(defn rewind []
+  (print "REWIND!")
+  )
+
+(defn forward []
+  (print "FORWARD!")
+  )
+
+
 (defonce mah-loops
   (do
 ; == Concurrent Processes =================================
@@ -289,8 +300,8 @@
   (let [time-travel (<! time-lord)]
     ;;catch thjose clicks
     (cond (= time-travel :rewind)
-          (print "REWIND!")
+          (rewind)
           (= time-travel :forward)
-          (print "FORWARD!")
+          (forward)
           :else (print "The Doctor is in."))
     (recur)))))
