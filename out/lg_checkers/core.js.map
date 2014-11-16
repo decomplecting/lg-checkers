@@ -1,9 +1,0 @@
-{"version":3,
- "file":"/Users/milt/projects/lg-checkers/out/lg_checkers/core.js",
- "sources":["core.cljs"],
- "lineCount":16,
- "mappings":
- ";AAAA;;;;;;AAMA,GAAA,OAASA;CAAT;CAAA,AAAA,AAASA,4BACP,aACE,AAACC;AACD,AAACC;AACD,OAACC",
- "names":
- ["lg-checkers.core/app-init", "lg-checkers.board/init-board",
-  "lg-checkers.ui/bootstrap-ui", "lg-checkers.ui/data-ui"]}
