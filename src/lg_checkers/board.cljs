@@ -115,12 +115,12 @@
 (defn board-contents-q [db & [tx-id]]
   (if tx-id
     (d/q '[:find ?idx ?color
-           :in $ ?tx-id
+           :in $
            :where
-           [(<= ?t ?tx-id)]
-           [?piece :piece/color ?color ?t]
+           [?piece :piece/color ?color]
            [?piece :piece/position ?pos]
-           [?pos :position/idx ?idx]] db)
+           [?pos :position/idx ?idx]] (vec (filter (fn [[_ _ _ t _]]
+                                                     (<= t tx-id)) (map vec (:eavt db)))))
     (d/q '[:find ?idx ?color
            :where
            [?piece :piece/color ?color]
@@ -272,6 +272,15 @@
                  :where
                  [?piece :piece/position ?pos]] db pos)))
 
+
+(defn move!
+  "Fires a transaction to move a piece to a position. In this context you could
+  also check for piece jumping, kinging, or other game domain side effects and
+  mutate the transaction accordingly."
+  [piece position]
+  (d/transact! conn [{:db/id piece
+                      :piece/position position}]))
+
 ; == Time travel =====================
 ; @milt I need to pair with you on these fns
 ; to get the fn queries applied to the txs properly
@@ -315,9 +324,7 @@
 
 (go-loop []
      (let [{:keys [piece position]} (<! board-commands)]
-       ;; Let's try a transaction
-       (d/transact! conn [{:db/id piece
-                           :piece/position position}])
+       (move! piece position)
        (recur)))
 
 (go-loop []
