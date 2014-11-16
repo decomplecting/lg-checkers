@@ -3,7 +3,7 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [put! chan <!]]
-            [lg-checkers.board :refer [board board-events]]))
+            [lg-checkers.board :refer [board board-events time-lord]]))
 
 (enable-console-print!)
 
@@ -51,6 +51,8 @@
       (map draw-row
            (partition 4 board)))))
 
+
+
 ; == Bootstrap ============================================
 (defn bootstrap-ui []
   (om/root
@@ -59,3 +61,19 @@
     {:target (. js/document (getElementById "checkers"))}))
 
 ;(bootstrap-ui)
+
+; == Data Magic ===
+
+(defn rewind []
+  (om/component
+   (dom/div nil
+            (dom/button #js {:onClick (fn [e] (put! time-lord :rewind))} "Rewind")
+            (dom/button #js {:onClick (fn [e] (put! time-lord :forward))} "Forward"))))
+
+(defn data-ui []
+  (om/root
+   rewind
+   board
+   {:target (. js/document (getElementById "data"))}))
+
+(data-ui)

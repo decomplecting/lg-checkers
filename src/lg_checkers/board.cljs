@@ -91,6 +91,9 @@
 ;     (atom (create-board))
 (defonce board-state (chan))
 
+; For our rewind button
+(defonce time-lord (chan))
+
 ; == Board State ==========================================
 ; initialize a board, where positions are indexed 1-32.
 ; each position is an atom containing the symbol of the
@@ -163,7 +166,6 @@
   (map (fn [pos] {pos (compute-pos-neighbors pos)})
        (range 1 33)))
 
-
 (defn empty-pos? [db pos]
   (nil? (ffirst (d/q '[:find ?piece
                        :in $ ?pos
@@ -221,3 +223,13 @@
                            ;; the same as board index, so we cut a corner:
                            :piece/position position}])
        (recur)))
+
+(go-loop []
+  (let [time-travel (<! time-lord)]
+    ;;catch thjose clicks
+    (cond (= time-travel :rewind)
+          (print "REWIND!")
+          (= time-travel :forward)
+          (print "FORWARD!")
+          :else (print "The Doctor is in."))
+    (recur)))
