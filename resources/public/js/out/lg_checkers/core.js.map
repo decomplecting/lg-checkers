@@ -1,0 +1,12 @@
+{"version":3,
+ "file":
+ "/Users/jason/code/lg-checkers/resources/public/js/out/lg_checkers/core.js",
+ "sources":["core.cljs"],
+ "lineCount":21,
+ "mappings":
+ ";AAAA;;;;;;;;AAKA,AAACA;AAED,GAAA,OAASC;CAAT;CAAA,AAAA,AAASA,4BACP,aACE,AAACC;AACD,AAACC;AACD,OAACC;;;AAEL,2CAAA,3CAACC,uHAEiB,aAAA,AAAO,iCAAA,1BAACC",
+ "names":
+ ["cljs.core/enable-console-print!", "lg-checkers.core/app-init",
+  "lg-checkers.board/init-board", "lg-checkers.ui/bootstrap-ui",
+  "lg-checkers.ui/data-ui", "figwheel.client/watch-and-reload",
+  "cljs.core/print"]}
