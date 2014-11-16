@@ -1,7 +1,9 @@
 (ns lg-checkers.board
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [put! chan <!]]
-            [datascript :as d]))
+            [datascript :as d]
+            [datascript.core :as dc]
+            [om.core :as om :include-macros true]))
 
 (enable-console-print!)
 
@@ -9,7 +11,16 @@
 
 (defonce conn (d/create-conn schema))
 
-(defonce initial-tx
+
+;; prevent cursor-ification https://gist.github.com/swannodette/11308901
+(extend-type dc/DB
+  om/IToCursor
+  (-to-cursor
+    ([this _] this)
+    ([this _ _] this)))
+
+
+(defn init-board []
     (let [pos-matrix (vec (apply concat (map-indexed (fn [i row]
                                     (if (even? i)
                                       (take-nth 2 (drop 1 row))
@@ -98,7 +109,7 @@
 ; initialize a board, where positions are indexed 1-32.
 ; each position is an atom containing the symbol of the
 ; piece in it.
-(defn create-board []
+#_(defn create-board []
   (atom
    (apply sorted-map
           (flatten
@@ -111,12 +122,7 @@
 
 ; instantiate our game board state, initializing our
 ; board with starting pieces
-(defonce board (create-board))
 
-
-(d/listen! conn (fn [tx-data]
-                  (let [db (:db-after tx-data)]
-                    (swap! board merge (get-board db)))))
 
 
 ;(defonce board conn)
@@ -189,7 +195,8 @@
        :position pos-b
        :piece blk-piece-to-move})))
 
-
+(defonce mah-loops
+  (do
 ; == Concurrent Processes =================================
 ; this concurrent process reacts to board click events --
 ; at present, it sets the board position clicked to contain
@@ -197,7 +204,7 @@
 ; channel
 (go-loop [last-pos nil]
   (let [{:keys [position]} (<! board-events)]
-
+    (print position)
     (if last-pos ;; was there a previous click?
       (if-let [move (get-move last-pos position)] ;; was it a move?
         (do (put! board-commands move)
@@ -232,4 +239,4 @@
           (= time-travel :forward)
           (print "FORWARD!")
           :else (print "The Doctor is in."))
-    (recur)))
+    (recur)))))

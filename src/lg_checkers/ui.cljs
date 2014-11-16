@@ -3,7 +3,7 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [put! chan <!]]
-            [lg-checkers.board :refer [board board-events time-lord]]))
+            [lg-checkers.board :refer [conn get-board board board-events time-lord]]))
 
 (enable-console-print!)
 
@@ -49,7 +49,7 @@
   (om/component
    (apply dom/table nil
       (map draw-row
-           (partition 4 board)))))
+           (partition 4 (sort-by first (get-board board)))))))
 
 
 
@@ -57,7 +57,7 @@
 (defn bootstrap-ui []
   (om/root
     checkerboard ; our UI
-    board        ; our game state
+    conn        ; our game state
     {:target (. js/document (getElementById "checkers"))}))
 
 ;(bootstrap-ui)
@@ -75,5 +75,3 @@
    rewind
    board
    {:target (. js/document (getElementById "data"))}))
-
-(data-ui)
