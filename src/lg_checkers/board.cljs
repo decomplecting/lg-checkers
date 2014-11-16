@@ -251,8 +251,7 @@
 
 
 (defn legal-move? [db pos1 pos2]
-  (let [
-        possible-moves (d/q '[:find ?moves
+  (let [possible-moves (d/q '[:find ?moves
                               :in $ % ?pos1
                               :where
                               (empty-pos ?moves)
