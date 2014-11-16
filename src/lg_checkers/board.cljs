@@ -264,10 +264,8 @@
 
 (defn rewind []
   (swap! tx-cursor dec)
-  (print (get-board @conn @tx-cursor)))
-
-(defn forward []
-  (swap! tx-cursor inc)
+  (print @tx-cursor)
+  (print @txq)
   (print (get-board @conn @tx-cursor)))
 
 
