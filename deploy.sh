@@ -4,11 +4,12 @@
 
 function deploy()
 {
+    local timestamp=$(date +%s)
     git checkout -b deploy;
     lein cljsbuild clean;
     lein cljsbuild once;
     git add .;
-    git commit -m "deploying app";
+    git commit -m "deploying app at $(timestamp)";
 
     git subtree push --prefix resources/public origin gh-pages;
     git checkout master;

@@ -75,3 +75,5 @@
    temporality
    board
    {:target (. js/document (getElementById "data"))}))
+
+(def foo 1)
