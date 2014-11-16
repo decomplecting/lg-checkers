@@ -251,6 +251,9 @@
        :piece blk-piece-to-move})))
 
 ; == Time travel =====================
+; @milt I need to pair with you on these fns
+; to get the fn queries applied to the txs properly
+; and then wiring them up to the btns should be easy.
 
 (defn rewind []
   (print "REWIND!")
