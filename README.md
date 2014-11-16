@@ -1,5 +1,7 @@
 [![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/decomplecting/lg-checkers?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
+[Hackathon Presentation](http://goo.gl/5BIFM2)
+
 The Challenge: Lookingglass Checkers
 ====================================
 
