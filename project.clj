@@ -15,11 +15,18 @@
   :source-paths ["src"]
 
   :cljsbuild {
-    :builds [{:id "lg-checkers"
-              :source-paths ["src"]
+    :builds [{:id "dev"
+              :source-paths ["dev" "src"]
               :compiler {
                 :output-to "resources/public/js/lg_checkers.js"
                 :output-dir "resources/public/js/out"
                 :externs ["datascript/externs.js"]
                 :optimizations :none
-                :source-map true}}]})
+                         :source-map true}}
+             {:id "lg-checkers"
+              :source-paths ["src"]
+              :compiler {
+                         :output-to "lg_checkers.js"
+                         :output-dir "out"
+                         :optimizations :none
+                         :source-map true}}]})

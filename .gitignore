@@ -2,7 +2,7 @@ pom.xml
 *jar
 lib/
 classes/
-/out/
+resources/public/js/out/
 target/
 .nrepl-port
 .lein-deps-sum

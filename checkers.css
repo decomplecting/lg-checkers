@@ -1,0 +1,56 @@
+table {
+	border: 1px solid black;
+}
+
+tr {
+	background: solid black;
+}
+
+td {
+	border: 1px solid black;
+	width: 60px;
+	height: 64px;
+	padding: 0px;
+	padding-left: 8px;
+	text-align: center;
+	align-content: center;
+}
+
+.white {
+	background: white;
+}
+
+.green {
+	background: green;
+}
+
+.empty {
+}
+
+.red-piece {
+	border-radius: 50%;
+	width: 52px;
+	height: 52px;
+	background: red;
+}
+
+.black-piece {
+	border-radius: 50%;
+	width: 52px;
+	height: 52px;
+	background: black;
+}
+
+.prom-red-piece {
+	border-radius: 50%;
+	width: 52px;
+	height: 52px;
+	background: darkred;
+}
+
+.prom-black-piece {
+	border-radius: 50%;
+	width: 52px;
+	height: 52px;
+	background: darkslategray;
+}
