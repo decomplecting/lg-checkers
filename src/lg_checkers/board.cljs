@@ -254,9 +254,9 @@
   (let [possible-moves (d/q '[:find ?moves
                               :in $ % ?pos1
                               :where
-                              (empty-pos ?moves)
-                              (neighbors ?pos1 ?moves)
-                              [_ :piece/position ?pos1]
+                              (empty-pos ?moves) ;;empty spaces
+                              (neighbors ?pos1 ?moves) ;;that are neighbors
+                              [_ :piece/position ?pos1] ;;current space has a piece (redundant)
                               ] db checkers-rules pos1)]
     (possible-moves [pos2])))
 
