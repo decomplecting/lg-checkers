@@ -272,6 +272,15 @@
                  :where
                  [?piece :piece/position ?pos]] db pos)))
 
+
+(defn move!
+  "Fires a transaction to move a piece to a position. In this context you could
+  also check for piece jumping, kinging, or other game domain side effects and
+  mutate the transaction accordingly."
+  [piece position]
+  (d/transact! conn [{:db/id piece
+                      :piece/position position}]))
+
 ; == Time travel =====================
 ; @milt I need to pair with you on these fns
 ; to get the fn queries applied to the txs properly
@@ -317,9 +326,7 @@
 
 (go-loop []
      (let [{:keys [piece position]} (<! board-commands)]
-       ;; Let's try a transaction
-       (d/transact! conn [{:db/id piece
-                           :piece/position position}])
+       (move! piece position)
        (recur)))
 
 (go-loop []
