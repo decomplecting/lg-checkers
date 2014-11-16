@@ -91,6 +91,9 @@
 ;     (atom (create-board))
 (defonce board-state (chan))
 
+; For our rewind button
+(defonce rewind-click (chan))
+
 ; == Board State ==========================================
 ; initialize a board, where positions are indexed 1-32.
 ; each position is an atom containing the symbol of the
@@ -162,6 +165,10 @@
 (defn compute-neighbor-positions []
   (map (fn [pos] {pos (compute-pos-neighbors pos)})
        (range 1 33)))
+
+;; Piece movement
+
+
 
 ; == Concurrent Processes =================================
 ; this concurrent process reacts to board click events --
