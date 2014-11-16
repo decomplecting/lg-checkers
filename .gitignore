@@ -1,11 +1,11 @@
 pom.xml
 *jar
-/lib/
-/classes/
-/out/
-/target/
+lib/
+classes/
+out/
+target/
+.nrepl-port
 .lein-deps-sum
 .lein-repl-history
 .lein-plugins/
-.gitignore
-resources/public/js/*
+
