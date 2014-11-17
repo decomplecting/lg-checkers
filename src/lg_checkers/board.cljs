@@ -69,7 +69,7 @@
 
 ;; checkers has rules... so does datalog!
 
-(defonce checkers-rules
+(def checkers-rules
   '[
 
     ;; just a helper
@@ -98,15 +98,39 @@
 
     ;; get empty
     [(empty-pos ?pos)
-     [?pos :position/idx]
      [(missing? $ ?pos :piece/_position)]]
 
     [(empty-neighbors ?pos ?neighbor)
-     (empty-pos ?pos)
      (neighbors ?pos ?neighbor)
-     ]
+     (empty-pos ?neighbor)]
 
+    [(enemies ?piece ?enemy)
+     [?piece :piece/color ?color]
+     [?enemy :piece/color ?enemy-color]
+     [(not= ?color ?enemy-color)]]
+
+
+    ;; inc 2 or dec 2 (for jumping)
+    ;; inc OR dec
+    [(inc2-dec2 ?i ?ii)
+     [(+ ?i 1) ?ii]]
+    [(inc2-dec2 ?i ?ii)
+     [(- ?i 2) ?ii]]
+
+    ;; get jump neighbors
+    [(jump-neighbors ?pos ?neighbor)
+     (coords ?pos ?x ?y)
+     (inc2-dec2 ?x ?xx)
+     (inc2-dec2 ?y ?yy)
+     [?neighbor :position/x ?xx]
+     [?neighbor :position/y ?yy]]
     ])
+
+#_(print (d/q '[:find ?pos
+              :in $ %
+              :where
+              (empty-neighbors ?ppos ?pos)
+              [?ppos :position/idx 22]] @conn checkers-rules))
 
 
 (defn board-contents-q [db & [tx-id]]
@@ -255,10 +279,8 @@
   (let [possible-moves (d/q '[:find ?moves
                               :in $ % ?pos1
                               :where
-                              (empty-pos ?moves) ;;empty spaces
-                              (neighbors ?pos1 ?moves) ;;that are neighbors
-                              [_ :piece/position ?pos1] ;;current space has a piece (redundant)
-                              ] db checkers-rules pos1)]
+                              (empty-neighbors ?pos1 ?moves)] db checkers-rules pos1)]
+    (print possible-moves)
     (possible-moves [pos2])))
 
 (defn get-piece-at-pos
@@ -307,6 +329,7 @@
   (let [{:keys [position]} (<! board-events)
         db @conn
         last-click-piece (get-piece-at-pos db last-pos)]
+    (print position)
     (if (and last-pos last-click-piece) ;; was there a previous click? was it a piece?
       (if (legal-move? db last-pos position)
         (do (put! board-commands {:command :update-board-position
