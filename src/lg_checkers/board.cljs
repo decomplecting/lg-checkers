@@ -100,6 +100,7 @@
     [(empty-pos ?pos)
      [(missing? $ ?pos :piece/_position)]]
 
+    ;; empty neighbors.. used for simple mov
     [(empty-neighbors ?pos ?neighbor)
      (neighbors ?pos ?neighbor)
      (empty-pos ?neighbor)]
@@ -124,13 +125,20 @@
      (inc2-dec2 ?y ?yy)
      [?neighbor :position/x ?xx]
      [?neighbor :position/y ?yy]]
+
+    ;; get set of positions between pos 1 and pos 2.
+    ;; Note that this works in either y direction, so you'll get 2 for
+    ;; horizontally adjacent squares
+    [(pos-between ?pos1 ?pos2 ?pos-between)
+     (neighbors ?pos1 ?pos-between)
+     (neighbors ?pos2 ?pos-between)
+     ]
     ])
 
 #_(print (d/q '[:find ?pos
               :in $ %
               :where
-              (empty-neighbors ?ppos ?pos)
-              [?ppos :position/idx 22]] @conn checkers-rules))
+              (pos-between 21 17 ?pos)] @conn checkers-rules))
 
 
 (defn board-contents-q [db & [tx-id]]
