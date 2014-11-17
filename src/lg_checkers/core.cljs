@@ -9,7 +9,3 @@
     (init-board)
     (bootstrap-ui)
     (data-ui)))
-
-;; (fw/watch-and-reload
-;;  ;; :websocket-url "ws://localhost:3449/figwheel-ws" default
-;;  :jsload-callback (fn [] (print "reloaded")))

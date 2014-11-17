@@ -3,26 +3,23 @@
   (:require [cljs.core.async :refer [put! chan <!]]
             [datascript :as d]
             [datascript.core :as dc]
-            [om.core :as om :include-macros true]))
+            [reagent.core :as r :refer [atom]]))
 
 (enable-console-print!)
 
+
 (defonce schema {:piece/position {:db/valueType :db.type/ref}})
 
-(defonce conn (d/create-conn schema))
+
+(defn create-conn [& [schema]]
+  (atom (d/empty-db schema)
+        :meta { :listeners  (atom {}) }))
+
+(defonce conn (create-conn schema))
 
 (defonce txq (atom (sorted-set (+ d/tx0 1))))
 
 (defonce tx-cursor (atom (last @txq)))
-
-
-;; prevent cursor-ification https://gist.github.com/swannodette/11308901
-(extend-type dc/DB
-  om/IToCursor
-  (-to-cursor
-    ([this _] this)
-    ([this _ _] this)))
-
 
 (defn init-board []
   (let [pos-matrix (vec
