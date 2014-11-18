@@ -7,6 +7,7 @@
 
 (enable-console-print!)
 
+(defonce tx-cursor (atom nil))
 
 (defonce schema {:piece/position {:db/valueType :db.type/ref}})
 
@@ -17,9 +18,6 @@
 
 (defonce conn (create-conn schema))
 
-(defonce txq (atom (sorted-set (+ d/tx0 1))))
-
-(defonce tx-cursor (atom (last @txq)))
 
 (defn init-board []
   (let [pos-matrix (vec
@@ -58,14 +56,17 @@
       (d/transact! conn (vec (concat positions red-pieces black-pieces)))))
 
 
-;; let's keep a tx queue
+#_(print (vec (sort (flatten (seq (d/q '[:find ?t
+                                   :where
+                                         [_ _ _ ?t]] @conn))))))
 
-(d/listen! conn
-           (fn [tx-report]
-             (do
-               (swap! txq merge (get-in tx-report [:tempids :db/current-tx]))
-               (reset! tx-cursor (last @txq)))))
-
+#_(print (-> (d/q '[:find ?t
+            :where
+            [_ _ _ ?t]] @conn)
+     (seq)
+     (flatten)
+     (sort)
+     (vec)))
 
 ;; checkers has rules... so does datalog!
 
@@ -164,12 +165,14 @@
            [?piece :piece/color ?color]
            [?piece :piece/position ?pos]
            [?pos :position/idx ?idx]] (vec (filter (fn [[_ _ _ t _]]
-                                                     (<= t tx-id)) (map vec (:eavt db)))))
+                                                     (<= t tx-id)) (map vec (:avet db)))))
     (d/q '[:find ?idx ?color
            :where
            [?piece :piece/color ?color]
            [?piece :piece/position ?pos]
            [?pos :position/idx ?idx]] db)))
+
+(print (count (board-contents-q @conn 536870914)))
 
 (defn board-munge [tuples]
   (merge
@@ -180,7 +183,12 @@
 (defn get-board [db & [tx-id]]
   (board-munge (board-contents-q db tx-id)))
 
+;;; Helpful things
 
+(defn tx-queue []
+  (vec (sort (flatten (seq (d/q '[:find ?t
+                                  :where
+                                  [_ _ _ ?t]] @conn))))))
 
 ;(print (get-board @conn))
 
@@ -321,25 +329,36 @@
   mutate the transaction accordingly."
   [piece position]
   (d/transact! conn [{:db/id piece
-                      :piece/position position}]))
+                      :piece/position position}])
+  (reset! tx-cursor (last (tx-queue)))
+  (print (str "new" @tx-cursor)))
 
 ; == Time travel =====================
 ; @milt I need to pair with you on these fns
 ; to get the fn queries applied to the txs properly
 ; and then wiring them up to the btns should be easy.
 
+
+(print (last (tx-queue)))
+
+
+(print @tx-cursor)
+
+(defn travel [direction]
+  (cond (= direction :rewind) (swap! tx-cursor dec)
+        (= direction :forward) (swap! tx-cursor inc)))
+
 (defn rewind []
   (swap! tx-cursor dec)
   (print @tx-cursor)
-  (print @txq)
+  (print (tx-queue))
   (print (get-board @conn @tx-cursor)))
 
 (defn forward []
   (swap! tx-cursor inc)
   (print @tx-cursor)
-  (print @txq)
+  (print (tx-queue))
   (print (get-board @conn @tx-cursor)))
-
 
 (defonce mah-loops
   (do
@@ -382,6 +401,5 @@
     (cond (= time-travel :rewind)
           (rewind)
           (= time-travel :forward)
-          (forward)
-          :else (print "The Doctor is in."))
+          (forward))
     (recur)))))

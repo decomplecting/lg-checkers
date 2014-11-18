@@ -6,7 +6,7 @@
                                        get-board
                                        board-events
                                        time-lord
-                                       txq
+                                       tx-queue
                                        tx-cursor]]))
 
 (enable-console-print!)
