@@ -7,7 +7,7 @@
 
 (enable-console-print!)
 
-(defonce tx-cursor (atom nil))
+(defonce tx-cursor (atom (inc d/tx0)))
 
 (defonce schema {:piece/position {:db/valueType :db.type/ref}})
 
@@ -23,6 +23,10 @@
 
 (defn add-to-history! [db]
   (swap! history assoc (:max-tx db) db))
+
+
+(defn rewind-mode? [db tx-c]
+  (not= (:max-tx db) tx-c))
 
 (defn init-board []
   (let [pos-matrix (vec
@@ -61,11 +65,6 @@
     (-> (d/transact! conn (vec (concat positions red-pieces black-pieces)))
         :db-before
         add-to-history!)))
-
-
-#_(print (vec (sort (flatten (seq (d/q '[:find ?t
-                                   :where
-                                         [_ _ _ ?t]] @conn))))))
 
 
 
@@ -401,7 +400,7 @@
   (let [{:keys [position]} (<! board-events)
         db @conn
         last-click-piece (get-piece-at-pos db last-pos)]
-    (if (and last-pos last-click-piece) ;; was there a previous click? was it a piece?
+    (if (and last-pos last-click-piece (not (rewind-mode? db @tx-cursor))) ;; was there a previous click? was it a piece?
       (if-let [move (legal-move? db last-pos position)]
         (do
           (put! board-commands {:command :update-board-position
