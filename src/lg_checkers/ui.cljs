@@ -77,10 +77,13 @@
      :on-click (fn [e]
                  (put! time-lord :forward))} "Forward"]
    (when (rewind-mode? @conn @tx-cursor)
-     [:button
-      {:type "button"
-       :on-click (fn [e]
-                   (reset! conn (@history @tx-cursor)))} "Play From Here"])])
+     [:div
+      [:button
+       {:type "button"
+        :on-click (fn [e]
+                    (reset! conn (@history @tx-cursor)))} "Play From Here"]
+      [:div {:class "past"}
+       "YOU ARE IN THE PAST"]])])
 
 
 (defn data-ui []
