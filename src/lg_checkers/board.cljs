@@ -72,13 +72,11 @@
 (def checkers-rules
   '[
 
-    ;; just a helper
+    ;; helpers
     [(coords ?pos ?x ?y)
      [?pos :position/x ?x]
      [?pos :position/y ?y]]
 
-
-    ;; get piece position
     [(piece-position ?piece ?pos)
      [?piece :piece/position ?pos]]
 
@@ -114,7 +112,7 @@
     ;; inc 2 or dec 2 (for jumping)
     ;; inc OR dec
     [(inc2-dec2 ?i ?ii)
-     [(+ ?i 1) ?ii]]
+     [(+ ?i 2) ?ii]]
     [(inc2-dec2 ?i ?ii)
      [(- ?i 2) ?ii]]
 
@@ -133,12 +131,29 @@
      (neighbors ?pos1 ?pos-between)
      (neighbors ?pos2 ?pos-between)
      ]
+
+    [(jumps ?pos ?jumps)
+     (piece-position ?piece ?pos)
+     (jump-neighbors ?pos ?jumps)
+     (empty-pos ?jumps)
+     (pos-between ?pos ?jumps ?jumped)
+     (piece-position ?jumped-piece ?jumped)
+     (enemies ?piece ?jumped-piece)
+     ]
+
+    [(moves ?pos ?moves)
+     (empty-neighbors ?pos ?moves)]
+
+    [(moves ?pos ?moves)
+     (jumps ?pos ?moves)]
     ])
 
-#_(print (d/q '[:find ?pos
-              :in $ %
-              :where
-              (pos-between 21 17 ?pos)] @conn checkers-rules))
+#_(print (d/q '[:find ?move
+                :in $ % ?pos
+                :where
+                (moves ?pos ?move)
+              ] @conn checkers-rules 22
+              ))
 
 
 (defn board-contents-q [db & [tx-id]]
@@ -284,10 +299,10 @@
   game is pretty boring as the only legal move is to an adjacent empty space.
   Passive agressive checkers"
   [db pos1 pos2]
-  (let [possible-moves (d/q '[:find ?moves
+  (let [possible-moves (d/q '[:find ?move
                               :in $ % ?pos1
                               :where
-                              (empty-neighbors ?pos1 ?moves)] db checkers-rules pos1)]
+                              (moves ?pos1 ?move)] db checkers-rules pos1)]
     (print possible-moves)
     (possible-moves [pos2])))
 
