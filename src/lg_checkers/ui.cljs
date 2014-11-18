@@ -80,7 +80,7 @@
      [:button
       {:type "button"
        :on-click (fn [e]
-                   (reset! conn (@history @tx-cursor)))} "Commit"])])
+                   (reset! conn (@history @tx-cursor)))} "Play From Here"])])
 
 
 (defn data-ui []
