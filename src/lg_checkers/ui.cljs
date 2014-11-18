@@ -7,7 +7,9 @@
                                        board-events
                                        time-lord
                                        tx-queue
-                                       tx-cursor]]))
+                                       tx-cursor
+                                       rewind-mode?
+                                       history]]))
 
 (enable-console-print!)
 
@@ -73,7 +75,12 @@
    [:button
     {:type "button"
      :on-click (fn [e]
-                 (put! time-lord :forward))} "Forward"]])
+                 (put! time-lord :forward))} "Forward"]
+   (when (rewind-mode? @conn @tx-cursor)
+     [:button
+      {:type "button"
+       :on-click (fn [e]
+                   (reset! conn (@history @tx-cursor)))} "Play From Here"])])
 
 
 (defn data-ui []
