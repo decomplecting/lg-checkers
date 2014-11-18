@@ -380,15 +380,15 @@
 
 (defn rewind []
   (swap! tx-cursor dec)
-  ;(print @tx-cursor)
-  ;(print (tx-queue))
-  ;(print (get-board @conn @tx-cursor)))
+  #_(print @tx-cursor)
+  #_(print (tx-queue))
+  #_(print (get-board @conn @tx-cursor)))
 
 (defn forward []
   (swap! tx-cursor inc)
-  ;(print @tx-cursor)
-  ;(print (tx-queue))
-  ;(print (get-board @conn @tx-cursor)))
+  #_(print @tx-cursor)
+  #_(print (tx-queue))
+  #_(print (get-board @conn @tx-cursor)))
 
 (defonce mah-loops
   (do
