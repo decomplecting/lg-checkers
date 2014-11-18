@@ -19,6 +19,11 @@
 (defonce conn (create-conn schema))
 
 
+(defonce history (atom {(:max-tx @conn) @conn}))
+
+(defn add-to-history! [db]
+  (swap! history assoc (:max-tx db) db))
+
 (defn init-board []
   (let [pos-matrix (vec
                     (apply
@@ -53,20 +58,16 @@
                                           :piece/color :black-piece
                                           :piece/position (- (+ 20 (inc i)))})
                                          (drop 20 pos-matrix)))]
-      (d/transact! conn (vec (concat positions red-pieces black-pieces)))))
+    (-> (d/transact! conn (vec (concat positions red-pieces black-pieces)))
+        :db-before
+        add-to-history!)))
 
 
 #_(print (vec (sort (flatten (seq (d/q '[:find ?t
                                    :where
                                          [_ _ _ ?t]] @conn))))))
 
-#_(print (-> (d/q '[:find ?t
-            :where
-            [_ _ _ ?t]] @conn)
-     (seq)
-     (flatten)
-     (sort)
-     (vec)))
+
 
 ;; checkers has rules... so does datalog!
 
@@ -80,6 +81,15 @@
 
     [(piece-position ?piece ?pos)
      [?piece :piece/position ?pos]]
+
+    ;; given a function that takes a color and returns a comparator,
+    ;; limit the moves for the given piece's color.
+    [(direction ?dir-fn ?piece ?pos ?in-direction)
+     [?piece :piece/color ?color]
+     [?pos :position/y ?y]
+     [?in-direction :position/y ?yy]
+     [(?dir-fn ?color) ?comp-fn]
+     [(?comp-fn ?y ?yy)]]
 
     ;; inc OR dec
     [(inc-dec ?i ?ii)
@@ -133,40 +143,46 @@
      (neighbors ?pos2 ?pos-between)
      ]
 
-    [(jumps ?pos ?jumps)
-     (piece-position ?piece ?pos)
+    [(n-jumps ?dir-fn ?pos ?jumping-piece ?jumps ?jumped-piece)
      (jump-neighbors ?pos ?jumps)
+     (direction ?dir-fn ?jumping-piece ?pos ?jumps)
      (empty-pos ?jumps)
      (pos-between ?pos ?jumps ?jumped)
      (piece-position ?jumped-piece ?jumped)
-     (enemies ?piece ?jumped-piece)
-     ]
+     (enemies ?jumping-piece ?jumped-piece)]
 
-    [(moves ?pos ?moves)
-     (empty-neighbors ?pos ?moves)]
+    ;; example of how one would recursively detect jumps
+    ;; we don't do it here so we can easily return jumped pieces
+    #_[(r-jumps ?dir-fn ?pos ?jumping-piece ?jumps)
+     (n-jumps ?dir-fn ?pos ?jumping-piece ?jumps)]
+    #_[(r-jumps ?dir-fn ?pos ?jumping-piece ?jumps)
+     (n-jumps ?dir-fn ?pos ?jumping-piece ?init-jumps)
+     (r-jumps ?dir-fn ?init-jumps ?jumping-piece ?jumps)]
 
-    [(moves ?pos ?moves)
-     (jumps ?pos ?moves)]
+    [(jumps ?dir-fn ?pos ?jumps ?jumped-piece)
+     (piece-position ?jumping-piece ?pos)
+     (n-jumps ?dir-fn ?pos ?jumping-piece ?jumps ?jumped-piece)]
+
+    [(moves ?dir-fn ?pos ?moves ?jumped-piece)
+     (piece-position ?piece ?pos)
+     (empty-neighbors ?pos ?moves)
+     (direction ?dir-fn ?piece ?pos ?moves)]
+
+    [(moves ?dir-fn ?pos ?moves ?jumped-piece)
+     (jumps ?dir-fn ?pos ?moves ?jumped-piece)]
+
     ])
-
-#_(print (d/q '[:find ?move
-                :in $ % ?pos
-                :where
-                (moves ?pos ?move)
-              ] @conn checkers-rules 22
-              ))
 
 
 (defn board-contents-q [db & [tx-id]]
-  (if tx-id
+  (if (and tx-id (not= tx-id (:max-tx db)))
     (d/q '[:find ?idx ?color
            :in $
            :where
            [?piece :piece/color ?color]
            [?piece :piece/position ?pos]
-           [?pos :position/idx ?idx]] (vec (filter (fn [[_ _ _ t _]]
-                                                     (<= t tx-id)) (map vec (:avet db)))))
-    (d/q '[:find ?idx ?color
+           [?pos :position/idx ?idx]] (get @history tx-id))
+(d/q '[:find ?idx ?color
            :where
            [?piece :piece/color ?color]
            [?piece :piece/position ?pos]
@@ -299,21 +315,6 @@
        (range 1 33)))
 
 
-
-
-
-(defn legal-move?
-  "Given a db and two positions, checks the legality of move. At present, the
-  game is pretty boring as the only legal move is to an adjacent empty space.
-  Passive agressive checkers"
-  [db pos1 pos2]
-  (let [possible-moves (d/q '[:find ?move
-                              :in $ % ?pos1
-                              :where
-                              (moves ?pos1 ?move)] db checkers-rules pos1)]
-    (print possible-moves)
-    (possible-moves [pos2])))
-
 (defn get-piece-at-pos
   "Given a db and a position, find a piece or return nil"
   [db pos]
@@ -322,16 +323,50 @@
                  :where
                  [?piece :piece/position ?pos]] db pos)))
 
+(defn get-color-at-pos
+  "Given a db and a position, find a color or empty designation"
+  [db pos]
+  (or (ffirst (d/q '[:find ?color
+                     :in $ ?pos
+                     :where
+                     [?piece :piece/position ?pos]
+                     [?piece :piece/color ?color]] db pos))
+      :empty-piece))
+
+
+(defn legal-move?
+  "Given a db and two positions, checks the legality of move. At present, the
+  game is pretty boring as the only legal move is to an adjacent empty space.
+  Passive agressive checkers"
+  [db pos1 pos2]
+  (let [piece-color (get-color-at-pos db pos1)
+        possible-moves (d/q '[:find ?move ?jumped
+                              :in $ % ?pos1 ?dir-fn
+                              :where
+                              (moves ?dir-fn ?pos1 ?move ?jumped)] db
+                              checkers-rules
+                              pos1
+                              (fn [color]
+                                (get {:black-piece > :red-piece <} color)))]
+    (print possible-moves)
+    (first (filter (fn [[pos jumped]]
+              (= pos pos2)) possible-moves))))
 
 (defn move!
   "Fires a transaction to move a piece to a position. In this context you could
   also check for piece jumping, kinging, or other game domain side effects and
   mutate the transaction accordingly."
-  [piece position]
-  (d/transact! conn [{:db/id piece
-                      :piece/position position}])
-  (reset! tx-cursor (last (tx-queue)))
-  (print (str "new" @tx-cursor)))
+  [piece position jumped]
+
+  (let [tx-data (if jumped
+                  [[:db/add piece :piece/position position]
+                   [:db.fn/retractAttribute jumped :piece/position]]
+                  [{:db/id piece
+                    :piece/position position}])
+        txn (d/transact! conn tx-data)]
+    (add-to-history! (:db-before txn)))
+  (reset! tx-cursor (last (tx-queue))))
+
 
 ; == Time travel =====================
 ; @milt I need to pair with you on these fns
@@ -339,26 +374,21 @@
 ; and then wiring them up to the btns should be easy.
 
 
-(print (last (tx-queue)))
-
-
-(print @tx-cursor)
-
 (defn travel [direction]
   (cond (= direction :rewind) (swap! tx-cursor dec)
         (= direction :forward) (swap! tx-cursor inc)))
 
 (defn rewind []
   (swap! tx-cursor dec)
-  (print @tx-cursor)
-  (print (tx-queue))
-  (print (get-board @conn @tx-cursor)))
+  ;(print @tx-cursor)
+  ;(print (tx-queue))
+  ;(print (get-board @conn @tx-cursor)))
 
 (defn forward []
   (swap! tx-cursor inc)
-  (print @tx-cursor)
-  (print (tx-queue))
-  (print (get-board @conn @tx-cursor)))
+  ;(print @tx-cursor)
+  ;(print (tx-queue))
+  ;(print (get-board @conn @tx-cursor)))
 
 (defonce mah-loops
   (do
@@ -371,12 +401,13 @@
   (let [{:keys [position]} (<! board-events)
         db @conn
         last-click-piece (get-piece-at-pos db last-pos)]
-    (print position)
     (if (and last-pos last-click-piece) ;; was there a previous click? was it a piece?
-      (if (legal-move? db last-pos position)
-        (do (put! board-commands {:command :update-board-position
+      (if-let [move (legal-move? db last-pos position)]
+        (do
+          (put! board-commands {:command :update-board-position
                                   :position position
-                                  :piece last-click-piece})
+                                  :piece last-click-piece
+                                  :jumped (second move)})
             (recur nil))
         (recur nil)) ;;if not, clear and loop
       (recur position)) ;; if not, store the position
@@ -391,8 +422,8 @@
                (:piece command)))))
 
 (go-loop []
-     (let [{:keys [piece position]} (<! board-commands)]
-       (move! piece position)
+     (let [{:keys [piece position jumped]} (<! board-commands)]
+       (move! piece position jumped)
        (recur)))
 
 (go-loop []
