@@ -21,6 +21,11 @@
 
 (defonce tx-cursor (atom (last @txq)))
 
+(defonce history (atom {(:max-tx @conn) @conn}))
+
+(defn add-to-history! [db]
+  (swap! history assoc (:max-tx db) db))
+
 (defn init-board []
   (let [pos-matrix (vec
                     (apply
@@ -55,7 +60,9 @@
                                           :piece/color :black-piece
                                           :piece/position (- (+ 20 (inc i)))})
                                          (drop 20 pos-matrix)))]
-      (d/transact! conn (vec (concat positions red-pieces black-pieces)))))
+    (-> (d/transact! conn (vec (concat positions red-pieces black-pieces)))
+        :db-before
+        add-to-history!)))
 
 
 ;; let's keep a tx queue
@@ -178,14 +185,13 @@
 
 
 (defn board-contents-q [db & [tx-id]]
-  (if tx-id
+  (if (and tx-id (not= tx-id (:max-tx db)))
     (d/q '[:find ?idx ?color
            :in $
            :where
            [?piece :piece/color ?color]
            [?piece :piece/position ?pos]
-           [?pos :position/idx ?idx]] (vec (filter (fn [[_ _ _ t _]]
-                                                     (<= t tx-id)) (map vec (:eavt db)))))
+           [?pos :position/idx ?idx]] (get @history tx-id))
     (d/q '[:find ?idx ?color
            :where
            [?piece :piece/color ?color]
@@ -340,7 +346,11 @@
         possible-moves (d/q '[:find ?move ?jumped
                               :in $ % ?pos1 ?dir-fn
                               :where
-                              (moves ?dir-fn ?pos1 ?move ?jumped)] db checkers-rules pos1 (fn [color] (get {:black-piece > :red-piece <} color)))]
+                              (moves ?dir-fn ?pos1 ?move ?jumped)] db
+                              checkers-rules
+                              pos1
+                              (fn [color]
+                                (get {:black-piece > :red-piece <} color)))]
     (print possible-moves)
     (first (filter (fn [[pos jumped]]
               (= pos pos2)) possible-moves))))
@@ -356,8 +366,9 @@
                   [[:db/add piece :piece/position position]
                    [:db.fn/retractAttribute jumped :piece/position]]
                   [{:db/id piece
-                    :piece/position position}])]
-    (d/transact! conn tx-data)))
+                    :piece/position position}])
+        txn (d/transact! conn tx-data)]
+    (add-to-history! (:db-before txn))))
 
 ; == Time travel =====================
 ; @milt I need to pair with you on these fns
@@ -388,11 +399,9 @@
   (let [{:keys [position]} (<! board-events)
         db @conn
         last-click-piece (get-piece-at-pos db last-pos)]
-    (print position)
     (if (and last-pos last-click-piece) ;; was there a previous click? was it a piece?
       (if-let [move (legal-move? db last-pos position)]
         (do
-          (print move)
           (put! board-commands {:command :update-board-position
                                   :position position
                                   :piece last-click-piece
