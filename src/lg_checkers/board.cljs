@@ -11,22 +11,22 @@
 
 (defonce schema {:piece/position {:db/valueType :db.type/ref}})
 
-
 (defn create-conn [& [schema]]
   (atom (d/empty-db schema)
         :meta { :listeners  (atom {}) }))
 
 (defonce conn (create-conn schema))
 
-
 (defonce history (atom {(:max-tx @conn) @conn}))
 
 (defn add-to-history! [db]
   (swap! history assoc (:max-tx db) db))
 
-
 (defn rewind-mode? [db tx-c]
   (not= (:max-tx db) tx-c))
+
+(defn commit-time! []
+  (reset! conn (@history @tx-cursor)))
 
 (defn init-board []
   (let [pos-matrix (vec
@@ -187,7 +187,6 @@
            [?piece :piece/position ?pos]
            [?pos :position/idx ?idx]] db)))
 
-(print (count (board-contents-q @conn 536870914)))
 
 (defn board-munge [tuples]
   (merge
@@ -201,11 +200,8 @@
 ;;; Helpful things
 
 (defn tx-queue []
-  (vec (sort (flatten (seq (d/q '[:find ?t
-                                  :where
-                                  [_ _ _ ?t]] @conn))))))
+  (vec (range d/tx0 (inc (:max-tx @conn)))))
 
-;(print (get-board @conn))
 
 ; == Notes ==============================================
 ; Board pieces are defined in the checkers.css file.  The
@@ -347,7 +343,6 @@
                               pos1
                               (fn [color]
                                 (get {:black-piece > :red-piece <} color)))]
-    (print possible-moves)
     (first (filter (fn [[pos jumped]]
               (= pos pos2)) possible-moves))))
 
@@ -377,17 +372,21 @@
   (cond (= direction :rewind) (swap! tx-cursor dec)
         (= direction :forward) (swap! tx-cursor inc)))
 
+(defn cursor-inc [txc]
+  (if (< txc (last (tx-queue)))
+    (inc txc)
+    txc))
+
+(defn cursor-dec [txc]
+  (if (< (first (tx-queue)) txc)
+    (dec txc)
+    txc))
+
 (defn rewind []
-  (swap! tx-cursor dec)
-  #_(print @tx-cursor)
-  #_(print (tx-queue))
-  #_(print (get-board @conn @tx-cursor)))
+  (swap! tx-cursor dec))
 
 (defn forward []
-  (swap! tx-cursor inc)
-  #_(print @tx-cursor)
-  #_(print (tx-queue))
-  #_(print (get-board @conn @tx-cursor)))
+  (swap! tx-cursor inc))
 
 (defonce mah-loops
   (do
@@ -415,11 +414,6 @@
 ; this concurrent process receives board command messages
 ; and executes on them.  at present, the only thing it does
 ; is sets the desired game position to the desired piece
-#_(go (while true
-      (let [command (<! board-commands)]
-        (swap! board assoc (:position command)
-               (:piece command)))))
-
 (go-loop []
      (let [{:keys [piece position jumped]} (<! board-commands)]
        (move! piece position jumped)
@@ -431,5 +425,7 @@
     (cond (= time-travel :rewind)
           (rewind)
           (= time-travel :forward)
-          (forward))
+          (forward)
+          (= time-travel :commit)
+          (commit-time!))
     (recur)))))

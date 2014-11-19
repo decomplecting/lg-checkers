@@ -68,20 +68,21 @@
 ; == Data Magic ===
 (defn temporality []
   [:div
-   [:button
+   (when (> @tx-cursor (second (tx-queue)))[:button
     {:type "button"
      :on-click (fn [e]
-                 (put! time-lord :rewind))} "Rewind"]
-   [:button
-    {:type "button"
-     :on-click (fn [e]
-                 (put! time-lord :forward))} "Forward"]
+                 (put! time-lord :rewind))} "Rewind"])
+   (when (< @tx-cursor (last (tx-queue)))
+     [:button
+      {:type "button"
+       :on-click (fn [e]
+                   (put! time-lord :forward))} "Forward"])
    (when (rewind-mode? @conn @tx-cursor)
      [:div
       [:button
        {:type "button"
         :on-click (fn [e]
-                    (reset! conn (@history @tx-cursor)))} "Play From Here"]
+                    (put! time-lord :commit))} "Play From Here"]
       [:div {:class "past"}
        "YOU ARE IN THE PAST"]])])
 
