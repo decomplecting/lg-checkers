@@ -13,7 +13,7 @@ It does most of what you'd expect from a game of checkers, plus time travel.
 
 (MORE STUFF HERE)
 
-The original challenge skeleton is [here](https://github.com/orangepips/lg-checkers)
+The original challenge skeleton is [here](https://github.com/orangepips/lg-checkers), and the challenge description is at [CHALLENGE.md](https://github.com/decomplecting/lg-checkers/blob/master/CHALLENGE.md).
 
 ### Authors
 
