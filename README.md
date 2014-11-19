@@ -13,6 +13,8 @@ It does most of what you'd expect from a game of checkers, plus time travel.
 
 (MORE STUFF HERE)
 
+The original challenge skeleton is [here](https://github.com/orangepips/lg-checkers)
+
 ### Authors
 
 * [Milt Reder](https://github.com/milt)
